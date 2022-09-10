@@ -1,0 +1,1 @@
+godotenv -f .env go run main.go
