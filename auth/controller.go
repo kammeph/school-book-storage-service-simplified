@@ -57,7 +57,7 @@ func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
-	accessToken, err := common.CreateAccessToken(user.ID, *user.SchoolId, user.Username, user.Roles, user.Locale)
+	accessToken, err := common.CreateAccessToken(user.ID, user.Username, user.SchoolId, user.Roles, user.Locale)
 	if err != nil {
 		common.HttpErrorResponse(w, err.Error())
 		return
@@ -121,7 +121,7 @@ func (c AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 		common.HttpErrorResponseWithStatusCode(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	accessToken, err := common.CreateAccessToken(user.ID, *user.SchoolId, user.Username, user.Roles, user.Locale)
+	accessToken, err := common.CreateAccessToken(user.ID, user.Username, user.SchoolId, user.Roles, user.Locale)
 	if err != nil {
 		common.HttpErrorResponseWithStatusCode(w, err.Error(), http.StatusUnauthorized)
 		return
