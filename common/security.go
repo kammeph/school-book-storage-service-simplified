@@ -98,14 +98,14 @@ func GetClaimsFromToken(r *http.Request, tokenString string, claims jwt.Claims) 
 	return nil
 }
 
-func CreateAccessToken(userId, schoolId, username string, roles []Role, locale Locale) (string, error) {
+func CreateAccessToken(userId, username string, schoolId *string, roles []Role, locale Locale) (string, error) {
 	expirationTime := time.Now().Add(time.Duration(jwtAccessTokenExpiry) * time.Second)
 	claims := AccessClaims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 			Issuer:    username,
 		},
-		UserId: userId, SchoolId: &schoolId, Username: username, Roles: roles, Locale: locale,
+		UserId: userId, SchoolId: schoolId, Username: username, Roles: roles, Locale: locale,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(jwtSecretKey))
