@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+  app:
+    # image: kammeph/school-book-storage-service:${APP_VERSION}
+    build: .
+    image: school-book-storage-service
+    container_name: school-book-storage-service
+    hostname: school-book-storage-service
+    pull_policy: always
+    restart: always
+    ports:
+      - ${APP_PORT}:${CONTAINER_PORT}
+    environment:
+      - DB_DRIVER=${DB_DRIVER}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_DATABASE=${DB_DATABASE}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ACCESS_TOKEN_EXPIRY_SEC=${JWT_ACCESS_TOKEN_EXPIRY_SEC}
+      - JWT_REFRESH_TOKEN_EXPIRY_SEC=${JWT_REFRESH_TOKEN_EXPIRY_SEC}
+      - CORS_ALLOW_ORIGIN_PROTOCOL=${CORS_ALLOW_ORIGIN_PROTOCOL}
+      - CORS_ALLOW_ORIGIN_HOST=${CORS_ALLOW_ORIGIN_HOST}
+      - CORS_ALLOW_ORIGIN_PORT=${CORS_ALLOW_ORIGIN_PORT}
+      - CONTAINER_PORT=${CONTAINER_PORT}
+    networks:
+      - school_book_storage_network
+
+networks:
+  school_book_storage_network:
+    external: true

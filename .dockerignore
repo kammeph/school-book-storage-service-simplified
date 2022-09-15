@@ -1,0 +1,20 @@
+# Unit Testing
+*_test.go
+
+# GitHub
+.github
+.gitignore
+
+# Builds
+*/bin
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Docs
+*.md
+
+# Scripts
+run.sh

@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/kammeph/school-book-storage-service-simplified/auth"
 	"github.com/kammeph/school-book-storage-service-simplified/db"
@@ -25,5 +28,7 @@ func main() {
 			return
 		}
 	})
-	http.ListenAndServe(":9090", nil)
+	port := os.Getenv("CONTAINER_PORT")
+	log.Printf("App will be served on port: %s", port)
+	http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
 }
