@@ -1,1 +1,1 @@
-godotenv -f .env go run main.go
+godotenv -f .env.local go run ./cmd/main.go

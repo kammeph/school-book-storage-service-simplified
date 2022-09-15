@@ -1,0 +1,1 @@
+go build -o ./bin/school-book-storage-service ./cmd/main.go
