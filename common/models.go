@@ -1,6 +1,9 @@
 package common
 
-import "github.com/golang-jwt/jwt"
+import (
+	"github.com/golang-jwt/jwt"
+	"github.com/kammeph/school-book-storage-service-simplified/fp"
+)
 
 type Role string
 
@@ -10,6 +13,24 @@ const (
 	Superuser Role = "SUPERUSER"
 	User      Role = "USER"
 )
+
+func HasRoles(userRoles, allowedRoles []Role) bool {
+	for _, role := range allowedRoles {
+		if fp.Some(userRoles, func(r Role) bool { return r == role }) {
+			return true
+		}
+	}
+	return false
+}
+
+func IsSysAdmin(userRoles []Role) bool {
+	for _, role := range userRoles {
+		if role == SysAdmin {
+			return true
+		}
+	}
+	return false
+}
 
 type Locale string
 
