@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -42,8 +41,8 @@ func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
-	ctx := context.Background()
-	passwordHash, err := c.usersRepo.GetUserCredentialsByName(ctx, credentials.Username)
+	ctx := r.Context()
+	passwordHash, err := c.usersRepo.GetCredentialsByName(ctx, credentials.Username)
 	if err != nil {
 		common.HttpErrorResponse(w, err.Error())
 		return
@@ -52,7 +51,7 @@ func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
-	user, err := c.usersRepo.GetUserByName(ctx, credentials.Username)
+	user, err := c.usersRepo.GetByName(ctx, credentials.Username)
 	if err != nil {
 		common.HttpErrorResponse(w, err.Error())
 		return
@@ -100,7 +99,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := users.NewUserWithDefaultRole(credentials.Username, string(passwordHash))
-	if err := c.usersRepo.AddUser(context.Background(), user); err != nil {
+	if err := c.usersRepo.Create(r.Context(), user); err != nil {
 		common.HttpErrorResponse(w, err.Error())
 	}
 }
@@ -116,7 +115,7 @@ func (c AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 		common.HttpErrorResponseWithStatusCode(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	user, err := c.usersRepo.GetUserById(context.Background(), claims.UserID)
+	user, err := c.usersRepo.GetById(r.Context(), claims.UserID)
 	if err != nil {
 		common.HttpErrorResponseWithStatusCode(w, err.Error(), http.StatusUnauthorized)
 		return

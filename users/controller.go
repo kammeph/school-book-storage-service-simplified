@@ -1,7 +1,6 @@
 package users
 
 import (
-	"context"
 	"database/sql"
 	"net/http"
 
@@ -28,7 +27,7 @@ func AddUsersController(db *sql.DB) {
 }
 
 func (c UsersController) GetUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := c.usersRepository.GetUsers(context.Background())
+	users, err := c.usersRepository.GetAll(r.Context())
 	if err != nil {
 		common.HttpErrorResponse(w, err.Error())
 		return
@@ -42,7 +41,7 @@ func (c UsersController) GetUserById(w http.ResponseWriter, r *http.Request, cla
 		common.HttpErrorResponseWithStatusCode(w, "user missing permissions", http.StatusForbidden)
 		return
 	}
-	user, err := c.usersRepository.GetUserById(context.Background(), userId)
+	user, err := c.usersRepository.GetById(r.Context(), userId)
 	if err != nil {
 		common.HttpErrorResponse(w, err.Error())
 		return
@@ -51,7 +50,7 @@ func (c UsersController) GetUserById(w http.ResponseWriter, r *http.Request, cla
 }
 
 func (c UsersController) GetMe(w http.ResponseWriter, r *http.Request, claims common.AccessClaims) {
-	user, err := c.usersRepository.GetUserById(context.Background(), claims.UserId)
+	user, err := c.usersRepository.GetById(r.Context(), claims.UserId)
 	if err != nil {
 		common.HttpErrorResponse(w, err.Error())
 		return
