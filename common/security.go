@@ -55,11 +55,9 @@ func IsAllowedWithClaims(
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		for _, role := range roles {
-			if fp.Some(claims.Roles, func(r Role) bool { return r == role }) {
-				handler(w, r, *claims)
-				return
-			}
+		if HasRoles(claims.Roles, roles) {
+			handler(w, r, *claims)
+			return
 		}
 		http.Error(w, "user missing permissions", http.StatusForbidden)
 	}

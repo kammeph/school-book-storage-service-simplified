@@ -10,23 +10,23 @@ import (
 )
 
 const (
-	getUsersQuery                 = "SELECT u.id, u.school_id, u.username, u.locale, r.role FROM users u INNER JOIN roles r ON r.user_id = u.id WHERE u.active = TRUE ORDER BY u.id"
-	getUserByIdQuery              = "SELECT u.id, u.school_id, u.username, u.locale, r.role FROM users u INNER JOIN roles r ON r.user_id = u.id WHERE u.active = TRUE AND u.id = ? ORDER BY u.id"
-	getUserByNameQuery            = "SELECT u.id, u.school_id, u.username, u.locale, r.role FROM users u INNER JOIN roles r ON r.user_id = u.id WHERE u.active = TRUE AND u.username= ? ORDER BY u.id"
-	getUserCredentialsByNameQuery = "SELECT password_hash FROM users WHERE active = TRUE AND username= ?"
-	countUserNameQuery            = "SELECT COUNT(id) FROM users WHERE active = TRUE AND username= ?"
-	addUserQuery                  = "INSERT INTO users (id, school_id, username, password_hash, active, locale) VALUES (?, ?, ?, ?, ?, ?)"
-	updateUserQuery               = "UPDATE users SET school_id = ?, username = ?, locale = ? WHERE id = ?"
-	addUserRolesQuery             = "INSERT INTO roles (user_id, role) VALUES (?, ?)"
-	deleteUserRolesQuery          = "DELETE FROM roles WHERE user_id = ?"
+	getAllQuery               = "SELECT u.id, u.school_id, u.username, u.locale, r.role FROM users u INNER JOIN roles r ON r.user_id = u.id WHERE u.active = TRUE ORDER BY u.id"
+	getByIdQuery              = "SELECT u.id, u.school_id, u.username, u.locale, r.role FROM users u INNER JOIN roles r ON r.user_id = u.id WHERE u.active = TRUE AND u.id = ? ORDER BY u.id"
+	getByNameQuery            = "SELECT u.id, u.school_id, u.username, u.locale, r.role FROM users u INNER JOIN roles r ON r.user_id = u.id WHERE u.active = TRUE AND u.username= ? ORDER BY u.id"
+	getCredentialsByNameQuery = "SELECT password_hash FROM users WHERE active = TRUE AND username= ?"
+	countByNameQuery          = "SELECT COUNT(id) FROM users WHERE active = TRUE AND username= ?"
+	createQuery               = "INSERT INTO users (id, school_id, username, password_hash, active, locale) VALUES (?, ?, ?, ?, ?, ?)"
+	updateQuery               = "UPDATE users SET school_id = ?, username = ?, locale = ? WHERE id = ?"
+	addRolesQuery             = "INSERT INTO roles (user_id, role) VALUES (?, ?)"
+	deleteRolesQuery          = "DELETE FROM roles WHERE user_id = ?"
 )
 
 type UsersRepository interface {
-	GetUsers(ctx context.Context) ([]UserDto, error)
-	GetUserById(ctx context.Context, userId string) (UserDto, error)
-	GetUserByName(ctx context.Context, username string) (UserDto, error)
-	GetUserCredentialsByName(ctx context.Context, username string) (string, error)
-	AddUser(ctx context.Context, user UserModel) error
+	GetAll(ctx context.Context) ([]UserDto, error)
+	GetById(ctx context.Context, userId string) (UserDto, error)
+	GetByName(ctx context.Context, username string) (UserDto, error)
+	GetCredentialsByName(ctx context.Context, username string) (string, error)
+	Create(ctx context.Context, user UserModel) error
 }
 
 type SqlUsersRepository struct {
@@ -37,8 +37,8 @@ func NewSqlUserRepository(db *sql.DB) *SqlUsersRepository {
 	return &SqlUsersRepository{db}
 }
 
-func (r *SqlUsersRepository) GetUsers(ctx context.Context) ([]UserDto, error) {
-	stmt, err := r.db.PrepareContext(ctx, getUsersQuery)
+func (r *SqlUsersRepository) GetAll(ctx context.Context) ([]UserDto, error) {
+	stmt, err := r.db.PrepareContext(ctx, getAllQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -53,8 +53,8 @@ func (r *SqlUsersRepository) GetUsers(ctx context.Context) ([]UserDto, error) {
 	return scanUsers(rows)
 }
 
-func (r *SqlUsersRepository) GetUserById(ctx context.Context, userId string) (UserDto, error) {
-	stmt, err := r.db.PrepareContext(ctx, getUserByIdQuery)
+func (r *SqlUsersRepository) GetById(ctx context.Context, userId string) (UserDto, error) {
+	stmt, err := r.db.PrepareContext(ctx, getByIdQuery)
 	if err != nil {
 		return UserDto{}, err
 	}
@@ -82,8 +82,8 @@ func (r *SqlUsersRepository) GetUserById(ctx context.Context, userId string) (Us
 	return users[0], nil
 }
 
-func (r *SqlUsersRepository) GetUserByName(ctx context.Context, username string) (UserDto, error) {
-	stmt, err := r.db.PrepareContext(ctx, getUserByNameQuery)
+func (r *SqlUsersRepository) GetByName(ctx context.Context, username string) (UserDto, error) {
+	stmt, err := r.db.PrepareContext(ctx, getByNameQuery)
 	if err != nil {
 		return UserDto{}, err
 	}
@@ -111,8 +111,8 @@ func (r *SqlUsersRepository) GetUserByName(ctx context.Context, username string)
 	return users[0], nil
 }
 
-func (r *SqlUsersRepository) GetUserCredentialsByName(ctx context.Context, username string) (string, error) {
-	stmt, err := r.db.PrepareContext(ctx, getUserCredentialsByNameQuery)
+func (r *SqlUsersRepository) GetCredentialsByName(ctx context.Context, username string) (string, error) {
+	stmt, err := r.db.PrepareContext(ctx, getCredentialsByNameQuery)
 	if err != nil {
 		return "", err
 	}
@@ -131,8 +131,8 @@ func (r *SqlUsersRepository) GetUserCredentialsByName(ctx context.Context, usern
 	return password, nil
 }
 
-func (r *SqlUsersRepository) countUsername(ctx context.Context, username string) (int, error) {
-	stmt, err := r.db.PrepareContext(ctx, countUserNameQuery)
+func (r *SqlUsersRepository) countByName(ctx context.Context, username string) (int, error) {
+	stmt, err := r.db.PrepareContext(ctx, countByNameQuery)
 	if err != nil {
 		return 0, err
 	}
@@ -172,15 +172,15 @@ func scanUsers(rows *sql.Rows) ([]UserDto, error) {
 	return users, nil
 }
 
-func (r *SqlUsersRepository) AddUser(ctx context.Context, user UserModel) error {
-	count, err := r.countUsername(ctx, user.Username)
+func (r *SqlUsersRepository) Create(ctx context.Context, user UserModel) error {
+	count, err := r.countByName(ctx, user.Username)
 	if err != nil {
 		return err
 	}
 	if count >= 1 {
 		return fmt.Errorf("a user with the name %s already exists", user.Username)
 	}
-	stmt, err := r.db.PrepareContext(ctx, addUserQuery)
+	stmt, err := r.db.PrepareContext(ctx, createQuery)
 	if err != nil {
 		return err
 	}
@@ -191,11 +191,11 @@ func (r *SqlUsersRepository) AddUser(ctx context.Context, user UserModel) error 
 		return err
 	}
 
-	return r.addUserRoles(ctx, user.ID, user.Roles)
+	return r.addRoles(ctx, user.ID, user.Roles)
 }
 
-func (r *SqlUsersRepository) UpdateUser(ctx context.Context, user UserDto) error {
-	stmt, err := r.db.PrepareContext(ctx, updateUserQuery)
+func (r *SqlUsersRepository) Update(ctx context.Context, user UserDto) error {
+	stmt, err := r.db.PrepareContext(ctx, updateQuery)
 	if err != nil {
 		return err
 	}
@@ -206,11 +206,11 @@ func (r *SqlUsersRepository) UpdateUser(ctx context.Context, user UserDto) error
 		return err
 	}
 
-	return r.updateUserRoles(ctx, user.ID, user.Roles)
+	return r.updateRoles(ctx, user.ID, user.Roles)
 }
 
-func (r *SqlUsersRepository) addUserRoles(ctx context.Context, userId string, roles []common.Role) error {
-	stmt, err := r.db.PrepareContext(ctx, addUserRolesQuery)
+func (r *SqlUsersRepository) addRoles(ctx context.Context, userId string, roles []common.Role) error {
+	stmt, err := r.db.PrepareContext(ctx, addRolesQuery)
 	if err != nil {
 		return err
 	}
@@ -225,8 +225,8 @@ func (r *SqlUsersRepository) addUserRoles(ctx context.Context, userId string, ro
 	return nil
 }
 
-func (r *SqlUsersRepository) deleteUserRoles(ctx context.Context, userId string) error {
-	stmt, err := r.db.PrepareContext(ctx, deleteUserRolesQuery)
+func (r *SqlUsersRepository) deleteRoles(ctx context.Context, userId string) error {
+	stmt, err := r.db.PrepareContext(ctx, deleteRolesQuery)
 	if err != nil {
 		return err
 	}
@@ -235,10 +235,10 @@ func (r *SqlUsersRepository) deleteUserRoles(ctx context.Context, userId string)
 	return err
 }
 
-func (r *SqlUsersRepository) updateUserRoles(ctx context.Context, userId string, roles []common.Role) error {
-	err := r.deleteUserRoles(ctx, userId)
+func (r *SqlUsersRepository) updateRoles(ctx context.Context, userId string, roles []common.Role) error {
+	err := r.deleteRoles(ctx, userId)
 	if err != nil {
 		return err
 	}
-	return r.addUserRoles(ctx, userId, roles)
+	return r.addRoles(ctx, userId, roles)
 }
