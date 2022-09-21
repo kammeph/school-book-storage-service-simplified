@@ -8,6 +8,22 @@ import (
 	"github.com/kammeph/school-book-storage-service-simplified/common"
 )
 
+type SchoolsResponseModel struct {
+	Schools []SchoolDto `json:"schools"`
+}
+
+func SchoolsResponse(w http.ResponseWriter, schools []SchoolDto) {
+	common.JsonResponse(w, SchoolsResponseModel{schools})
+}
+
+type SchoolResponseModel struct {
+	School SchoolDto `json:"school"`
+}
+
+func SchoolResponse(w http.ResponseWriter, school SchoolDto) {
+	common.JsonResponse(w, SchoolResponseModel{school})
+}
+
 type SchoolsController struct {
 	repository SchoolsRepository
 }
@@ -31,7 +47,7 @@ func (c SchoolsController) GetAll(w http.ResponseWriter, r *http.Request) {
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
-	common.HttpResponse(w, schools)
+	SchoolsResponse(w, schools)
 }
 
 func (c SchoolsController) GetById(w http.ResponseWriter, r *http.Request, claims common.AccessClaims) {
@@ -49,7 +65,7 @@ func (c SchoolsController) GetById(w http.ResponseWriter, r *http.Request, claim
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
-	common.HttpResponse(w, school)
+	SchoolResponse(w, school)
 }
 
 func (c SchoolsController) AddSchool(w http.ResponseWriter, r *http.Request, claims common.AccessClaims) {
@@ -63,6 +79,7 @@ func (c SchoolsController) AddSchool(w http.ResponseWriter, r *http.Request, cla
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
+	common.HttpSuccessResponse(w)
 }
 
 func (c SchoolsController) UpdateSchool(w http.ResponseWriter, r *http.Request, claims common.AccessClaims) {
@@ -76,6 +93,7 @@ func (c SchoolsController) UpdateSchool(w http.ResponseWriter, r *http.Request, 
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
+	common.HttpSuccessResponse(w)
 }
 
 func (c SchoolsController) DeleteSchool(w http.ResponseWriter, r *http.Request, claims common.AccessClaims) {
@@ -92,4 +110,5 @@ func (c SchoolsController) DeleteSchool(w http.ResponseWriter, r *http.Request, 
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
+	common.HttpSuccessResponse(w)
 }

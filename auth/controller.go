@@ -85,6 +85,7 @@ func (c AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
+	common.HttpSuccessResponse(w)
 }
 
 func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
@@ -102,6 +103,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	if err := c.usersRepo.Create(r.Context(), user); err != nil {
 		common.HttpErrorResponse(w, err.Error())
 	}
+	common.HttpSuccessResponse(w)
 }
 
 func (c AuthController) Refresh(w http.ResponseWriter, r *http.Request) {

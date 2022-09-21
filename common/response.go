@@ -9,22 +9,22 @@ type HttpResponseModel struct {
 	Error string `json:"error"`
 }
 
-type HttpGenericResponseModel struct {
-	Payload any `json:"payload"`
+func JsonResponse(w http.ResponseWriter, response any) {
+	json.NewEncoder(w).Encode(response)
 }
 
-func JsonResponse(w http.ResponseWriter, payload any) {
-	json.NewEncoder(w).Encode(payload)
-}
-
-func HttpResponse(w http.ResponseWriter, payload any) {
-	response := HttpGenericResponseModel{Payload: payload}
+func HttpResponse(w http.ResponseWriter, response any) {
 	JsonResponse(w, response)
 }
 
 func HttpResponseWithStatusCode(w http.ResponseWriter, payload any, statusCode int) {
 	w.WriteHeader(statusCode)
 	HttpResponse(w, payload)
+}
+
+func HttpSuccessResponse(w http.ResponseWriter) {
+	response := HttpResponseModel{""}
+	JsonResponse(w, response)
 }
 
 func HttpErrorResponse(w http.ResponseWriter, err string) {

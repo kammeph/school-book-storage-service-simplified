@@ -66,13 +66,16 @@ func IsAllowedWithClaims(
 func getAccessToken(r *http.Request) (string, error) {
 	auth := r.Header.Get("Authorization")
 	if auth == "" {
-		return "", errors.New("access token is not set")
+		return "", errors.New("authorization header not set")
 	}
 	if !strings.ContainsAny(auth, "Bearer") {
 		return "", errors.New("no bearer token found")
 	}
-	token := strings.Split(auth, " ")[1]
-	return token, nil
+	authorizationSplited := strings.Split(auth, " ")
+	if len(authorizationSplited) <= 1 {
+		return "", errors.New("access token is not set")
+	}
+	return authorizationSplited[1], nil
 }
 
 func GetRefreshToken(r *http.Request) (string, error) {
