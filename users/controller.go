@@ -8,6 +8,24 @@ import (
 	"github.com/kammeph/school-book-storage-service-simplified/fp"
 )
 
+type UsersResponseModel struct {
+	Users []UserDto `json:"users"`
+}
+
+func UsersResponse(w http.ResponseWriter, users []UserDto) {
+	response := UsersResponseModel{users}
+	common.JsonResponse(w, response)
+}
+
+type UserResponseModel struct {
+	User UserDto `json:"user"`
+}
+
+func UserResponse(w http.ResponseWriter, user UserDto) {
+	response := UserResponseModel{user}
+	common.JsonResponse(w, response)
+}
+
 type UsersController struct {
 	usersRepository UsersRepository
 }
@@ -32,7 +50,7 @@ func (c UsersController) GetUsers(w http.ResponseWriter, r *http.Request) {
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
-	common.HttpResponse(w, users)
+	UsersResponse(w, users)
 }
 
 func (c UsersController) GetUserById(w http.ResponseWriter, r *http.Request, claims common.AccessClaims) {
@@ -46,7 +64,7 @@ func (c UsersController) GetUserById(w http.ResponseWriter, r *http.Request, cla
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
-	common.HttpResponse(w, user)
+	UserResponse(w, user)
 }
 
 func (c UsersController) GetMe(w http.ResponseWriter, r *http.Request, claims common.AccessClaims) {
@@ -55,5 +73,5 @@ func (c UsersController) GetMe(w http.ResponseWriter, r *http.Request, claims co
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
-	common.HttpResponse(w, user)
+	UserResponse(w, user)
 }
