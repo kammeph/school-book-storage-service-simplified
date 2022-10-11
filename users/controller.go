@@ -46,7 +46,7 @@ func AddUsersController(db *sql.DB) {
 	common.Post("/api/users/update",
 		common.IsAllowedWithClaims(controller.UpdateUser, []common.Role{common.User, common.Superuser, common.Admin, common.SysAdmin}))
 	common.Post("/api/users/delete",
-		common.IsAllowedWithClaims(controller.DeleteUser, []common.Role{common.SysAdmin}))
+		common.IsAllowed(controller.DeleteUser, []common.Role{common.SysAdmin}))
 }
 
 func (c UsersController) GetUsers(w http.ResponseWriter, r *http.Request) {
@@ -98,12 +98,12 @@ func (c UsersController) UpdateUser(w http.ResponseWriter, r *http.Request, clai
 	common.HttpSuccessResponse(w)
 }
 
-func (c UsersController) DeleteUser(w http.ResponseWriter, r *http.Request, claims common.AccessClaims) {
+func (c UsersController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("id")
 	if userId == "" {
 		common.HttpErrorResponse(w, "no user id specified")
 	}
-	if err := c.usersRepository.Delete(r.Context(), userId, claims.UserId); err != nil {
+	if err := c.usersRepository.Delete(r.Context(), userId); err != nil {
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
