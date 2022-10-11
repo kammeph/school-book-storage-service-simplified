@@ -36,7 +36,7 @@ func IsAllowed(handler func(w http.ResponseWriter, r *http.Request), roles []Rol
 				return
 			}
 		}
-		HttpErrorResponseWithStatusCode(w, "user missing permissions", http.StatusUnauthorized)
+		HttpErrorResponseWithStatusCode(w, "user missing permissions", http.StatusForbidden)
 	}
 }
 
