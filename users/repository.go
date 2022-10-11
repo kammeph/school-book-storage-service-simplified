@@ -17,7 +17,7 @@ const (
 	countByNameQuery          = "SELECT COUNT(id) FROM users WHERE active = TRUE AND username= ?"
 	createQuery               = "INSERT INTO users (id, school_id, username, password_hash, active, locale) VALUES (?, ?, ?, ?, ?, ?)"
 	updateQuery               = "UPDATE users SET school_id = ?, username = ?, locale = ? WHERE id = ?"
-	deleteQuery               = "UPDATE users SET active = FALSE, updated_at = CURRENT_TIMESTAMP(), updated_by = ? WHERE id = ?"
+	deleteQuery               = "UPDATE users SET active = FALSE WHERE id = ?"
 	addRolesQuery             = "INSERT INTO roles (user_id, role) VALUES (?, ?)"
 	deleteRolesQuery          = "DELETE FROM roles WHERE user_id = ?"
 )
@@ -29,7 +29,7 @@ type UsersRepository interface {
 	GetCredentialsByName(ctx context.Context, username string) (string, error)
 	Create(ctx context.Context, user UserModel) error
 	Update(ctx context.Context, user UserDto) error
-	Delete(ctx context.Context, id, updatedBy string) error
+	Delete(ctx context.Context, id string) error
 }
 
 type SqlUsersRepository struct {
@@ -212,7 +212,7 @@ func (r *SqlUsersRepository) Update(ctx context.Context, user UserDto) error {
 	return r.updateRoles(ctx, user.ID, user.Roles)
 }
 
-func (r *SqlUsersRepository) Delete(ctx context.Context, id, updatedBy string) error {
+func (r *SqlUsersRepository) Delete(ctx context.Context, id string) error {
 	r.deleteRoles(ctx, id)
 
 	stmt, err := r.db.PrepareContext(ctx, deleteQuery)
@@ -221,7 +221,7 @@ func (r *SqlUsersRepository) Delete(ctx context.Context, id, updatedBy string) e
 	}
 	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx, updatedBy, id)
+	_, err = stmt.ExecContext(ctx, id)
 	return err
 }
 
