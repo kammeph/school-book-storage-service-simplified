@@ -80,7 +80,7 @@ func (c BooksController) AddBook(w http.ResponseWriter, r *http.Request, claims 
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
-	if err := c.repository.Create(r.Context(), book, *claims.SchoolId, claims.UserId); err != nil {
+	if err := c.repository.Insert(r.Context(), book, *claims.SchoolId, claims.UserId); err != nil {
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
@@ -107,7 +107,7 @@ func (c BooksController) UpdateBook(w http.ResponseWriter, r *http.Request, clai
 func (c BooksController) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	bookId := r.URL.Query().Get("id")
 	if bookId == "" {
-		common.HttpErrorResponse(w, "no school id specified")
+		common.HttpErrorResponse(w, "no book id specified")
 		return
 	}
 	if err := c.repository.Delete(r.Context(), bookId); err != nil {

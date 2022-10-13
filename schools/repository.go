@@ -5,18 +5,10 @@ import (
 	"database/sql"
 )
 
-const (
-	getAllQuery  = "SELECT s.id, s.name FROM schools s WHERE s.active = TRUE"
-	getByIdQuery = "SELECT s.id, s.name FROM schools s WHERE s.active = TRUE and s.id = ?"
-	createQuery  = "INSERT INTO schools (id, name, active, created_at, created_by) VALUES (?, ?, ?, ?, ?)"
-	updateQuery  = "UPDATE schools SET name = ?, updated_at = CURRENT_TIMESTAMP(), updated_by = ? WHERE id = ?"
-	deleteQuery  = "UPDATE schools SET active = FALSE, updated_at = CURRENT_TIMESTAMP(), updated_by = ? WHERE id = ?"
-)
-
 type SchoolsRepository interface {
 	GetAll(ctx context.Context) ([]SchoolDto, error)
 	GetById(ctx context.Context, id string) (SchoolDto, error)
-	Create(ctx context.Context, school SchoolModel) error
+	Insert(ctx context.Context, school SchoolModel) error
 	Update(ctx context.Context, school SchoolModel) error
 	Delete(ctx context.Context, id, updatedBy string) error
 }
@@ -30,6 +22,7 @@ func NewSqlSchoolsRepository(db *sql.DB) SchoolsRepository {
 }
 
 func (r *SqlSchoolsRepository) GetAll(ctx context.Context) ([]SchoolDto, error) {
+	const getAllQuery = "SELECT s.id, s.name FROM schools s WHERE s.active = TRUE"
 	stmt, err := r.db.PrepareContext(ctx, getAllQuery)
 	if err != nil {
 		return nil, err
@@ -54,6 +47,7 @@ func (r *SqlSchoolsRepository) GetAll(ctx context.Context) ([]SchoolDto, error) 
 }
 
 func (r *SqlSchoolsRepository) GetById(ctx context.Context, id string) (SchoolDto, error) {
+	const getByIdQuery = "SELECT s.id, s.name FROM schools s WHERE s.active = TRUE and s.id = ?"
 	stmt, err := r.db.PrepareContext(ctx, getByIdQuery)
 	if err != nil {
 		return SchoolDto{}, err
@@ -70,7 +64,8 @@ func (r *SqlSchoolsRepository) GetById(ctx context.Context, id string) (SchoolDt
 	return school, err
 }
 
-func (r *SqlSchoolsRepository) Create(ctx context.Context, school SchoolModel) error {
+func (r *SqlSchoolsRepository) Insert(ctx context.Context, school SchoolModel) error {
+	const createQuery = "INSERT INTO schools (id, name, active, created_at, created_by) VALUES (?, ?, ?, ?, ?)"
 	stmt, err := r.db.PrepareContext(ctx, createQuery)
 	if err != nil {
 		return err
@@ -82,6 +77,7 @@ func (r *SqlSchoolsRepository) Create(ctx context.Context, school SchoolModel) e
 }
 
 func (r *SqlSchoolsRepository) Update(ctx context.Context, school SchoolModel) error {
+	const updateQuery = "UPDATE schools SET name = ?, updated_at = CURRENT_TIMESTAMP(), updated_by = ? WHERE id = ?"
 	stmt, err := r.db.PrepareContext(ctx, updateQuery)
 	if err != nil {
 		return err
@@ -93,6 +89,7 @@ func (r *SqlSchoolsRepository) Update(ctx context.Context, school SchoolModel) e
 }
 
 func (r *SqlSchoolsRepository) Delete(ctx context.Context, id, updatedBy string) error {
+	const deleteQuery = "UPDATE schools SET active = FALSE, updated_at = CURRENT_TIMESTAMP(), updated_by = ? WHERE id = ?"
 	stmt, err := r.db.PrepareContext(ctx, deleteQuery)
 	if err != nil {
 		return err

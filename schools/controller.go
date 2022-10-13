@@ -75,7 +75,7 @@ func (c SchoolsController) AddSchool(w http.ResponseWriter, r *http.Request, cla
 		return
 	}
 	school := NewSchool(addSchool.Name, claims.UserId)
-	if err := c.repository.Create(r.Context(), school); err != nil {
+	if err := c.repository.Insert(r.Context(), school); err != nil {
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
