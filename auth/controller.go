@@ -100,7 +100,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := users.NewUserWithDefaultRole(credentials.Username, string(passwordHash))
-	if err := c.usersRepo.Create(r.Context(), user); err != nil {
+	if err := c.usersRepo.Insert(r.Context(), user); err != nil {
 		common.HttpErrorResponse(w, err.Error())
 	}
 	common.HttpSuccessResponse(w)

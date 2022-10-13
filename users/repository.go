@@ -9,25 +9,12 @@ import (
 	"github.com/kammeph/school-book-storage-service-simplified/common"
 )
 
-const (
-	getAllQuery               = "SELECT u.id, u.school_id, u.username, u.locale, r.role FROM users u INNER JOIN roles r ON r.user_id = u.id WHERE u.active = TRUE ORDER BY u.id"
-	getByIdQuery              = "SELECT u.id, u.school_id, u.username, u.locale, r.role FROM users u INNER JOIN roles r ON r.user_id = u.id WHERE u.active = TRUE AND u.id = ? ORDER BY u.id"
-	getByNameQuery            = "SELECT u.id, u.school_id, u.username, u.locale, r.role FROM users u INNER JOIN roles r ON r.user_id = u.id WHERE u.active = TRUE AND u.username= ? ORDER BY u.id"
-	getCredentialsByNameQuery = "SELECT password_hash FROM users WHERE active = TRUE AND username= ?"
-	countByNameQuery          = "SELECT COUNT(id) FROM users WHERE active = TRUE AND username= ?"
-	createQuery               = "INSERT INTO users (id, school_id, username, password_hash, active, locale) VALUES (?, ?, ?, ?, ?, ?)"
-	updateQuery               = "UPDATE users SET school_id = ?, username = ?, locale = ? WHERE id = ?"
-	deleteQuery               = "UPDATE users SET active = FALSE WHERE id = ?"
-	addRolesQuery             = "INSERT INTO roles (user_id, role) VALUES (?, ?)"
-	deleteRolesQuery          = "DELETE FROM roles WHERE user_id = ?"
-)
-
 type UsersRepository interface {
 	GetAll(ctx context.Context) ([]UserDto, error)
 	GetById(ctx context.Context, userId string) (UserDto, error)
 	GetByName(ctx context.Context, username string) (UserDto, error)
 	GetCredentialsByName(ctx context.Context, username string) (string, error)
-	Create(ctx context.Context, user UserModel) error
+	Insert(ctx context.Context, user UserModel) error
 	Update(ctx context.Context, user UserDto) error
 	Delete(ctx context.Context, id string) error
 }
@@ -41,6 +28,7 @@ func NewSqlUserRepository(db *sql.DB) *SqlUsersRepository {
 }
 
 func (r *SqlUsersRepository) GetAll(ctx context.Context) ([]UserDto, error) {
+	const getAllQuery = "SELECT u.id, u.school_id, u.username, u.locale, r.role FROM users u INNER JOIN roles r ON r.user_id = u.id WHERE u.active = TRUE ORDER BY u.id"
 	stmt, err := r.db.PrepareContext(ctx, getAllQuery)
 	if err != nil {
 		return nil, err
@@ -57,6 +45,7 @@ func (r *SqlUsersRepository) GetAll(ctx context.Context) ([]UserDto, error) {
 }
 
 func (r *SqlUsersRepository) GetById(ctx context.Context, userId string) (UserDto, error) {
+	const getByIdQuery = "SELECT u.id, u.school_id, u.username, u.locale, r.role FROM users u INNER JOIN roles r ON r.user_id = u.id WHERE u.active = TRUE AND u.id = ? ORDER BY u.id"
 	stmt, err := r.db.PrepareContext(ctx, getByIdQuery)
 	if err != nil {
 		return UserDto{}, err
@@ -86,6 +75,7 @@ func (r *SqlUsersRepository) GetById(ctx context.Context, userId string) (UserDt
 }
 
 func (r *SqlUsersRepository) GetByName(ctx context.Context, username string) (UserDto, error) {
+	const getByNameQuery = "SELECT u.id, u.school_id, u.username, u.locale, r.role FROM users u INNER JOIN roles r ON r.user_id = u.id WHERE u.active = TRUE AND u.username= ? ORDER BY u.id"
 	stmt, err := r.db.PrepareContext(ctx, getByNameQuery)
 	if err != nil {
 		return UserDto{}, err
@@ -115,6 +105,7 @@ func (r *SqlUsersRepository) GetByName(ctx context.Context, username string) (Us
 }
 
 func (r *SqlUsersRepository) GetCredentialsByName(ctx context.Context, username string) (string, error) {
+	const getCredentialsByNameQuery = "SELECT password_hash FROM users WHERE active = TRUE AND username= ?"
 	stmt, err := r.db.PrepareContext(ctx, getCredentialsByNameQuery)
 	if err != nil {
 		return "", err
@@ -135,6 +126,7 @@ func (r *SqlUsersRepository) GetCredentialsByName(ctx context.Context, username 
 }
 
 func (r *SqlUsersRepository) countByName(ctx context.Context, username string) (int, error) {
+	const countByNameQuery = "SELECT COUNT(id) FROM users WHERE active = TRUE AND username= ?"
 	stmt, err := r.db.PrepareContext(ctx, countByNameQuery)
 	if err != nil {
 		return 0, err
@@ -175,7 +167,8 @@ func scanUsers(rows *sql.Rows) ([]UserDto, error) {
 	return users, nil
 }
 
-func (r *SqlUsersRepository) Create(ctx context.Context, user UserModel) error {
+func (r *SqlUsersRepository) Insert(ctx context.Context, user UserModel) error {
+	const insertQuery = "INSERT INTO users (id, school_id, username, password_hash, active, locale) VALUES (?, ?, ?, ?, ?, ?)"
 	count, err := r.countByName(ctx, user.Username)
 	if err != nil {
 		return err
@@ -183,7 +176,7 @@ func (r *SqlUsersRepository) Create(ctx context.Context, user UserModel) error {
 	if count >= 1 {
 		return fmt.Errorf("a user with the name %s already exists", user.Username)
 	}
-	stmt, err := r.db.PrepareContext(ctx, createQuery)
+	stmt, err := r.db.PrepareContext(ctx, insertQuery)
 	if err != nil {
 		return err
 	}
@@ -194,10 +187,11 @@ func (r *SqlUsersRepository) Create(ctx context.Context, user UserModel) error {
 		return err
 	}
 
-	return r.addRoles(ctx, user.ID, user.Roles)
+	return r.insertRoles(ctx, user.ID, user.Roles)
 }
 
 func (r *SqlUsersRepository) Update(ctx context.Context, user UserDto) error {
+	const updateQuery = "UPDATE users SET school_id = ?, username = ?, locale = ? WHERE id = ?"
 	stmt, err := r.db.PrepareContext(ctx, updateQuery)
 	if err != nil {
 		return err
@@ -215,6 +209,7 @@ func (r *SqlUsersRepository) Update(ctx context.Context, user UserDto) error {
 func (r *SqlUsersRepository) Delete(ctx context.Context, id string) error {
 	r.deleteRoles(ctx, id)
 
+	const deleteQuery = "UPDATE users SET active = FALSE WHERE id = ?"
 	stmt, err := r.db.PrepareContext(ctx, deleteQuery)
 	if err != nil {
 		return err
@@ -225,8 +220,9 @@ func (r *SqlUsersRepository) Delete(ctx context.Context, id string) error {
 	return err
 }
 
-func (r *SqlUsersRepository) addRoles(ctx context.Context, userId string, roles []common.Role) error {
-	stmt, err := r.db.PrepareContext(ctx, addRolesQuery)
+func (r *SqlUsersRepository) insertRoles(ctx context.Context, userId string, roles []common.Role) error {
+	const insertRolesQuery = "INSERT INTO roles (user_id, role) VALUES (?, ?)"
+	stmt, err := r.db.PrepareContext(ctx, insertRolesQuery)
 	if err != nil {
 		return err
 	}
@@ -242,6 +238,7 @@ func (r *SqlUsersRepository) addRoles(ctx context.Context, userId string, roles 
 }
 
 func (r *SqlUsersRepository) deleteRoles(ctx context.Context, userId string) error {
+	const deleteRolesQuery = "DELETE FROM roles WHERE user_id = ?"
 	stmt, err := r.db.PrepareContext(ctx, deleteRolesQuery)
 	if err != nil {
 		return err
@@ -256,5 +253,5 @@ func (r *SqlUsersRepository) updateRoles(ctx context.Context, userId string, rol
 	if err != nil {
 		return err
 	}
-	return r.addRoles(ctx, userId, roles)
+	return r.insertRoles(ctx, userId, roles)
 }

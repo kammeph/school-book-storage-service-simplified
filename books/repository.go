@@ -9,7 +9,7 @@ import (
 type BooksRepository interface {
 	GetAll(ctx context.Context, schoolId string) ([]Book, error)
 	GetById(ctx context.Context, id string) (Book, error)
-	Create(ctx context.Context, book Book, schoolId, createdBy string) error
+	Insert(ctx context.Context, book Book, schoolId, createdBy string) error
 	Update(ctx context.Context, book Book, updatedBy string) error
 	Delete(ctx context.Context, id string) error
 }
@@ -69,7 +69,7 @@ func (r *SqlBooksRepository) GetById(ctx context.Context, id string) (Book, erro
 	return books[0], nil
 }
 
-func (r *SqlBooksRepository) Create(ctx context.Context, book Book, schoolId, createdBy string) error {
+func (r *SqlBooksRepository) Insert(ctx context.Context, book Book, schoolId, createdBy string) error {
 	const insertBookQuery = "INSERT INTO books (id, school_id, isbn, name, description, subject, price, created_at, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(), ?)"
 	stmt, err := r.db.PrepareContext(ctx, insertBookQuery)
 	if err != nil {
