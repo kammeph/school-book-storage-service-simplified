@@ -4,7 +4,7 @@ type Subject string
 
 const (
 	German           Subject = "GERMAN"
-	Mathmetatics     Subject = "MATHMETATICS"
+	Mathematics      Subject = "MATHEMATICS"
 	English          Subject = "ENGLISH"
 	Music            Subject = "MUSIC"
 	GeneralEducation Subject = "GENERAL_EDUCATION"
