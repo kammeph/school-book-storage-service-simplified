@@ -13,9 +13,11 @@ type UsersRepository interface {
 	GetAll(ctx context.Context) ([]UserDto, error)
 	GetById(ctx context.Context, userId string) (UserDto, error)
 	GetByName(ctx context.Context, username string) (UserDto, error)
+	GetCredentialsById(ctx context.Context, id string) (string, error)
 	GetCredentialsByName(ctx context.Context, username string) (string, error)
 	Insert(ctx context.Context, user UserModel) error
 	Update(ctx context.Context, user UserDto) error
+	UpdatePassword(ctx context.Context, userId, passwordHash string) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -102,6 +104,27 @@ func (r *SqlUsersRepository) GetByName(ctx context.Context, username string) (Us
 	}
 
 	return users[0], nil
+}
+
+func (r *SqlUsersRepository) GetCredentialsById(ctx context.Context, id string) (string, error) {
+	const getCredentialsByIdQuery = "SELECT password_hash FROM users WHERE active = TRUE AND id = ?"
+	stmt, err := r.db.PrepareContext(ctx, getCredentialsByIdQuery)
+	if err != nil {
+		return "", err
+	}
+	defer stmt.Close()
+
+	row := stmt.QueryRowContext(ctx, id)
+	if row.Err() != nil {
+		return "", row.Err()
+	}
+
+	var password string
+	if err := row.Scan(&password); err != nil {
+		return "", err
+	}
+
+	return password, nil
 }
 
 func (r *SqlUsersRepository) GetCredentialsByName(ctx context.Context, username string) (string, error) {
@@ -204,6 +227,18 @@ func (r *SqlUsersRepository) Update(ctx context.Context, user UserDto) error {
 	}
 
 	return r.updateRoles(ctx, user.ID, user.Roles)
+}
+
+func (r *SqlUsersRepository) UpdatePassword(ctx context.Context, id, passwordHash string) error {
+	const updatePasswordQuery = "UPDATE users SET password_hash = ? WHERE id = ?"
+	stmt, err := r.db.PrepareContext(ctx, updatePasswordQuery)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(ctx, passwordHash, id)
+	return err
 }
 
 func (r *SqlUsersRepository) Delete(ctx context.Context, id string) error {
