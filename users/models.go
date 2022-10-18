@@ -23,6 +23,11 @@ type UserDto struct {
 	Locale   common.Locale `json:"locale"`
 }
 
+type PasswordUpdate struct {
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
+}
+
 type UserRole struct {
 	UserID string
 	Role   common.Role

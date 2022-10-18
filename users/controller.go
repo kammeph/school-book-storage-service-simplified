@@ -7,6 +7,7 @@ import (
 
 	"github.com/kammeph/school-book-storage-service-simplified/common"
 	"github.com/kammeph/school-book-storage-service-simplified/fp"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UsersResponseModel struct {
@@ -39,14 +40,16 @@ func AddUsersController(db *sql.DB) {
 	controller := NewUsersController(db)
 	common.Get("/api/users/me",
 		common.IsAllowedWithClaims(controller.GetMe, []common.Role{common.User, common.Superuser, common.Admin, common.SysAdmin}))
-	common.Get("/api/users",
+	common.Get("/api/users/get-all",
 		common.IsAllowed(controller.GetUsers, []common.Role{common.SysAdmin}))
-	common.Get("/api/users/by-id",
+	common.Get("/api/users/get-by-id",
 		common.IsAllowedWithClaims(controller.GetUserById, []common.Role{common.User, common.Superuser, common.Admin, common.SysAdmin}))
 	common.Post("/api/users/update",
 		common.IsAllowedWithClaims(controller.UpdateUser, []common.Role{common.User, common.Superuser, common.Admin, common.SysAdmin}))
 	common.Post("/api/users/delete",
 		common.IsAllowed(controller.DeleteUser, []common.Role{common.SysAdmin}))
+	common.Post("/api/users/change-password",
+		common.IsAllowedWithClaims(controller.ChangePassword, []common.Role{common.User, common.Superuser, common.Admin, common.SysAdmin}))
 }
 
 func (c UsersController) GetUsers(w http.ResponseWriter, r *http.Request) {
@@ -104,6 +107,37 @@ func (c UsersController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		common.HttpErrorResponse(w, "no user id specified")
 	}
 	if err := c.usersRepository.Delete(r.Context(), userId); err != nil {
+		common.HttpErrorResponse(w, err.Error())
+		return
+	}
+	common.HttpSuccessResponse(w)
+}
+
+func (c UsersController) ChangePassword(w http.ResponseWriter, r *http.Request, claims common.AccessClaims) {
+	var passwordUpdate PasswordUpdate
+	if err := json.NewDecoder(r.Body).Decode(&passwordUpdate); err != nil {
+		common.HttpErrorResponse(w, err.Error())
+		return
+	}
+	if passwordUpdate.OldPassword == passwordUpdate.NewPassword {
+		common.HttpErrorResponse(w, "old and new password must be unequal")
+		return
+	}
+	oldPasswordHash, err := c.usersRepository.GetCredentialsById(r.Context(), claims.UserId)
+	if err != nil {
+		common.HttpErrorResponse(w, err.Error())
+		return
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(oldPasswordHash), []byte(passwordUpdate.OldPassword)); err != nil {
+		common.HttpErrorResponse(w, err.Error())
+		return
+	}
+	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(passwordUpdate.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		common.HttpErrorResponse(w, err.Error())
+		return
+	}
+	if err := c.usersRepository.UpdatePassword(r.Context(), claims.UserId, string(newPasswordHash)); err != nil {
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
