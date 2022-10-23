@@ -9,7 +9,9 @@ import (
 
 type StorageBooksRepository interface {
 	GetBooksByStorage(ctx context.Context, storageId string) ([]Book, error)
-	StoreBooks(ctx context.Context, books []Book, storageId, createdBy string) error
+	StoreBooks(ctx context.Context, books []Book, storageId, requestor string) error
+	AddBookToStorage(ctx context.Context, book Book, storageId, createdBy string) error
+	ChangeBooksCountInStorage(ctx context.Context, books []Book, storageId, updatedBy string) error
 	RemoveBookFromStorage(ctx context.Context, storageId, bookId string) error
 }
 
@@ -72,6 +74,35 @@ func (r *SqlStorageBooksRepository) StoreBooks(ctx context.Context, books []Book
 			if err != nil {
 				return err
 			}
+		}
+	}
+	return nil
+}
+
+func (r *SqlStorageBooksRepository) AddBookToStorage(ctx context.Context, book Book, storageId, createdBy string) error {
+	const insertQuery = "INSERT INTO storage_book (storage_id, book_id, count, created_at, created_by) VALUES (?, ?, ?, CURRENT_TIMESTAMP(), ?)"
+	stmt, err := r.db.PrepareContext(ctx, insertQuery)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(ctx, storageId, book.ID, book.Count, createdBy)
+	return err
+}
+
+func (r *SqlStorageBooksRepository) ChangeBooksCountInStorage(ctx context.Context, books []Book, storageId, updatedBy string) error {
+	const updateQuery = "UPDATE storage_book SET count = ?, updated_at = CURRENT_TIMESTAMP(), updated_by = ? WHERE storage_id = ? AND book_id = ?"
+	stmt, err := r.db.PrepareContext(ctx, updateQuery)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, book := range books {
+		_, err = stmt.ExecContext(ctx, book.Count, updatedBy, storageId, book.ID)
+		if err != nil {
+			return err
 		}
 	}
 	return nil

@@ -3,6 +3,7 @@ package storagebooks
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/kammeph/school-book-storage-service-simplified/common"
@@ -12,6 +13,11 @@ import (
 type StoreBooksBody struct {
 	StorageId string `json:"storageId"`
 	Books     []Book `json:"books"`
+}
+
+type AddBookBody struct {
+	StorageId string `json:"storageId"`
+	Book      Book   `json:"book"`
 }
 
 type BooksResponseModel struct {
@@ -42,6 +48,8 @@ func AddStorageBooksController(db *sql.DB) {
 	controller := NewStorageBooksController(db)
 	common.Get("/api/storagebooks/get-books-by-storage", common.IsAllowed(controller.GetBooksByStorage, []common.Role{common.User, common.Superuser, common.Admin, common.SysAdmin}))
 	common.Post("/api/storagebooks/store-books", common.IsAllowedWithClaims(controller.StoreBooks, []common.Role{common.Superuser, common.Admin, common.SysAdmin}))
+	common.Post("/api/storagebooks/add-book", common.IsAllowedWithClaims(controller.AddBooksToStorage, []common.Role{common.Superuser, common.Admin, common.SysAdmin}))
+	common.Post("/api/storagebooks/change-books-count", common.IsAllowedWithClaims(controller.ChangeBooksCountInStorage, []common.Role{common.Superuser, common.Admin, common.SysAdmin}))
 	common.Post("/api/storagebooks/remove-book-from-storage", common.IsAllowed(controller.RemoveBookFromStorge, []common.Role{common.Admin, common.SysAdmin}))
 }
 
@@ -78,6 +86,57 @@ func (c StorageBooksController) StoreBooks(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if err := c.repository.StoreBooks(r.Context(), body.Books, body.StorageId, claims.UserId); err != nil {
+		common.HttpErrorResponse(w, err.Error())
+		return
+	}
+	common.HttpSuccessResponse(w)
+}
+
+func (c StorageBooksController) AddBooksToStorage(w http.ResponseWriter, r *http.Request, claims common.AccessClaims) {
+	var body AddBookBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		common.HttpErrorResponse(w, err.Error())
+		return
+	}
+	fmt.Println(body)
+	if body.StorageId == "" {
+		common.HttpErrorResponse(w, "no storage id specified")
+		return
+	}
+	if body.Book == (Book{}) {
+		common.HttpErrorResponse(w, "no book submitted")
+		return
+	}
+	if body.Book.Count < 0 {
+		common.HttpErrorResponse(w, "book count is not valid")
+		return
+	}
+	if err := c.repository.AddBookToStorage(r.Context(), body.Book, body.StorageId, claims.UserId); err != nil {
+		common.HttpErrorResponse(w, err.Error())
+		return
+	}
+	common.HttpSuccessResponse(w)
+}
+
+func (c StorageBooksController) ChangeBooksCountInStorage(w http.ResponseWriter, r *http.Request, claims common.AccessClaims) {
+	var body StoreBooksBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		common.HttpErrorResponse(w, err.Error())
+		return
+	}
+	if body.StorageId == "" {
+		common.HttpErrorResponse(w, "no storage id specified")
+		return
+	}
+	if len(body.Books) <= 0 {
+		common.HttpErrorResponse(w, "no books submitted")
+		return
+	}
+	if fp.Some(body.Books, func(book Book) bool { return book.Count < 0 }) {
+		common.HttpErrorResponse(w, "not all book counts are valid")
+		return
+	}
+	if err := c.repository.ChangeBooksCountInStorage(r.Context(), body.Books, body.StorageId, claims.UserId); err != nil {
 		common.HttpErrorResponse(w, err.Error())
 		return
 	}
