@@ -11,12 +11,3 @@ func RemoveIndex[TValue any](values []TValue, idx int) []TValue {
 	}
 	return append(values[:idx], values[idx+1:]...)
 }
-
-// func RemoveRef[TValue any](values *[]TValue, f func(value TValue) bool) []TValue {
-// 	for idx, v := range *values {
-// 		if f(v) {
-// 			return append(values[:idx], values[idx+1:]...)
-// 		}
-// 	}
-// 	return values
-// }
