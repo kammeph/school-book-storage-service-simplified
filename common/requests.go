@@ -1,20 +1,14 @@
 package common
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 )
 
-var (
-	corsAllowOriginProtocol = os.Getenv("CORS_ALLOW_ORIGIN_PROTOCOL")
-	corsAllowOriginHost     = os.Getenv("CORS_ALLOW_ORIGIN_HOST")
-	corsAllowOriginPort     = os.Getenv("CORS_ALLOW_ORIGIN_PORT")
-	corsAllowOrigin         = fmt.Sprintf("%s://%s:%s", corsAllowOriginProtocol, corsAllowOriginHost, corsAllowOriginPort)
-)
+var corsAllowOriginUrl = os.Getenv("CORS_ALLOW_ORIGIN_URL")
 
 func setupCORS(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", corsAllowOrigin)
+	(*w).Header().Set("Access-Control-Allow-Origin", corsAllowOriginUrl)
 	(*w).Header().Set("Access-Control-Allow-Credentials", "true")
 	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
