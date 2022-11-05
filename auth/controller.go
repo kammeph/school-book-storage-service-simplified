@@ -71,6 +71,7 @@ func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
 		Value:    refreshToken,
 		Secure:   true,
 		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
 	}
 	http.SetCookie(w, &cookie)
 	AccessTokenResponse(w, accessToken)
@@ -83,6 +84,7 @@ func (c AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Unix(0, 0),
 		Secure:   true,
 		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
 	}
 	http.SetCookie(w, &cookie)
 	common.HttpSuccessResponse(w)
