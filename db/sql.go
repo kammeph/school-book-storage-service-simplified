@@ -13,13 +13,14 @@ var (
 	dbdriver   = os.Getenv("DB_DRIVER")
 	dbuser     = os.Getenv("DB_USER")
 	dbpassword = os.Getenv("DB_PASSWORD")
-	dbhost     = os.Getenv("DB_HOST")
-	dbport     = os.Getenv("DB_PORT")
+	dbprotocol = os.Getenv("DB_PROTOCOL")
+	dbinstance = os.Getenv("DB_INSTANCE")
 	dbdbname   = os.Getenv("DB_DATABASE")
 )
 
 func NewSqlDB() *sql.DB {
-	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbuser, dbpassword, dbhost, dbport, dbdbname)
+	// connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbuser, dbpassword, dbhost, dbport, dbdbname)
+	connStr := fmt.Sprintf("%s:%s@%s(%s)/%s?parseTime=true", dbuser, dbpassword, dbprotocol, dbinstance, dbdbname)
 	db, err := sql.Open(dbdriver, connStr)
 	if err != nil {
 		panic(err)
